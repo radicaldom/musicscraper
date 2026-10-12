@@ -1,0 +1,16 @@
+# slskd: headless Soulseek client with a web UI (http://localhost:5030) and REST API.
+# Set MUSIC_DIR and DOWNLOAD_DIR in .env (see README).
+services:
+  slskd:
+    image: slskd/slskd:latest
+    container_name: slskd
+    restart: unless-stopped
+    ports:
+      - "5030:5030"        # web UI / API
+      - "50300:50300"      # Soulseek peer port (forward on your router for best results)
+    environment:
+      - SLSKD_REMOTE_CONFIGURATION=true
+    volumes:
+      - ./slskd:/app
+      - ${DOWNLOAD_DIR}:/downloads
+      - ${MUSIC_DIR}:/music:ro

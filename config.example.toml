@@ -1,0 +1,62 @@
+# Copy to config.toml and edit. Changes are picked up on the next run (no restart needed),
+# except [server] settings.
+
+[server]
+host = "127.0.0.1"
+port = 8765
+open_browser = true
+
+[library]
+# Folders containing your current music. Scanned to learn your taste and avoid re-downloading.
+# Point slskd's download folder somewhere inside one of these so new albums count as owned.
+paths = ["/path/to/your/Music"]
+
+[ollama]
+url = "http://localhost:11434"
+# General-purpose models know far more about music than coder models.
+# Alternatives: qwen3:14b (fits fully in 16 GB VRAM), gemma3:12b (needs a newer Ollama).
+model = "qwen3:30b"
+# Reasoning models (qwen3, deepseek-r1) "think" before answering; off is much faster.
+think = false
+temperature = 0.8
+num_ctx = 8192
+timeout_s = 600
+
+[ai]
+# Ask the model for (remaining slots * overfetch) suggestions per round, since many get filtered out.
+overfetch = 3
+max_rounds = 3
+# true: only suggest artists you don't already own. false: also suggest missing albums by owned artists.
+new_artists_only = true
+
+[musicbrainz]
+# Every suggestion is verified against MusicBrainz so hallucinated artists/albums are dropped.
+enabled = true
+# MusicBrainz asks for a contact in the User-Agent (an email or URL).
+contact = "https://github.com/you/musicscraper"
+
+[slskd]
+url = "http://localhost:5030"
+api_key = "sdjfh9wp8ehfpwosidfhio8h9w8ehpfioisheifuh"
+search_timeout_s = 20
+max_peer_queue = 50
+
+[downloads]
+max_albums_per_run = 5
+# "flac" = FLAC preferred, MP3 fallback | "flac_only" | "mp3_only"
+prefer = "flac"
+min_mp3_bitrate = 320
+min_tracks = 4
+max_tracks = 40
+include_artwork = true
+# If some files fail (rejected, errored...), re-queue the album from up to this many other users.
+max_retries = 2
+# Where slskd's /downloads folder is on this machine (DOWNLOAD_DIR in .env).
+local_dir = "/path/to/your/Music/_Soulseek"
+# Rename finished album folders. Fields: {artist} {album} {year}; " - {year}" is dropped if unknown.
+rename_folders = true
+folder_template = "{artist} - {album} - {year}"
+
+[schedule]
+# Run automatically every N hours while the app is open. 0 = manual only.
+interval_hours = 0

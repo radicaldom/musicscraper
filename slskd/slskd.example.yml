@@ -1,0 +1,24 @@
+# Copy to slskd/slskd.yml and fill in. Full reference: https://github.com/slskd/slskd/blob/master/config/slskd.example.yml
+soulseek:
+  username: binarydredd   # any new name registers an account on first login
+  password: jasdhhjsdg182376
+  listen_port: 50300
+
+directories:
+  downloads: /downloads
+  incomplete: /app/incomplete   # partial files stay on local disk
+
+# Share your library: many Soulseek users refuse uploads to people who share nothing.
+shares:
+  directories:
+    - /music
+
+web:
+  authentication:
+    username: slskd
+    password: change-me
+    api_keys:
+      musicscraper:
+        key: change-me-to-a-long-random-string   # same value as [slskd].api_key in config.toml
+        role: readwrite
+        cidr: 0.0.0.0/0,::/0

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MusicScraper</title>
+<style>
+  :root {
+    --bg: #111214; --panel: #1a1b1f; --line: #2a2c31; --text: #e8e6e1; --muted: #8d8c88;
+    --accent: #e8a33d; --ok: #6cc28a; --bad: #e06a5f; --mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; letter-spacing: .02em; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  #guide { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; width: 260px; max-width: 100%; }
+  #guide:focus { outline: none; border-color: var(--accent); }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .pill { font-size: 12px; padding: 2px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+  .pill.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+  button { font: inherit; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  main { display: grid; grid-template-columns: minmax(300px, 420px) 1fr; gap: 20px; padding: 20px 24px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 4px; }
+  label small { opacity: .7; }
+  textarea { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: 13px/1.45 var(--mono); resize: vertical; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .muted { color: var(--muted); font-size: 12px; }
+  #log { font: 12px/1.6 var(--mono); height: 260px; overflow-y: auto; background: var(--bg); border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; }
+  #log .t { color: var(--muted); margin-right: 8px; }
+  .tabs { display: flex; gap: 4px; margin: 18px 0 10px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); padding: 6px 12px; }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td .reason { color: var(--muted); font-size: 12px; }
+  .status { font: 11px var(--mono); padding: 1px 6px; border-radius: 4px; background: var(--bg); }
+  .status.completed { color: var(--ok); } .status.downloading, .status.retrying { color: #7fb6e6; } .status.queued { color: var(--text); }
+  .status.rejected, .status.error, .status.failed { color: var(--bad); } .status.not_found { color: var(--accent); }
+  .st { font-size: 12px; white-space: nowrap; }
+  .st.ok { color: var(--ok); } .st.bad { color: var(--bad); } .st.active { color: var(--muted); }
+  .bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; min-width: 80px; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .x { background: none; border: none; color: var(--muted); padding: 0 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Music<span>Scraper</span></h1>
+  <div class="pills" id="health"><span class="pill">checking…</span></div>
+  <input id="guide" type="text" placeholder="Guide this run with a band (optional)" autocomplete="off">
+  <button class="primary" id="runBtn">Discover &amp; queue</button>
+</header>
+
+<main>
+  <section>
+    <h2>Your taste</h2>
+    <label>Genres <small>one per line</small></label>
+    <textarea id="genres" rows="4"></textarea>
+    <label>Bands / artists <small>one per line</small></label>
+    <textarea id="artists" rows="5"></textarea>
+    <label>Songs <small>"Artist – Title", one per line</small></label>
+    <textarea id="songs" rows="4"></textarea>
+    <label>Avoid <small>genres or artists you don't want</small></label>
+    <textarea id="avoid" rows="2"></textarea>
+    <label>Notes for the AI <small>free text</small></label>
+    <textarea id="notes" rows="2" placeholder="e.g. more 90s stuff, nothing with harsh vocals"></textarea>
+    <div class="row"><button id="saveTaste">Save taste</button><span class="muted" id="saveMsg"></span></div>
+
+    <h2 style="margin-top:24px">Library</h2>
+    <div id="libSummary" class="muted">–</div>
+    <div class="row"><button id="scanBtn">Rescan library</button><span class="muted" id="scanMsg"></span></div>
+  </section>
+
+  <div style="min-width:0">
+    <section>
+      <h2>Activity</h2>
+      <div id="log"></div>
+    </section>
+
+    <div class="tabs">
+      <button data-tab="recs" class="active">History</button>
+      <button data-tab="downloads">Downloads</button>
+      <button data-tab="library">Top of library</button>
+    </div>
+    <section id="tab-recs">
+      <div class="row" style="margin-top:0">
+        <select id="statusFilter" style="background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px">
+          <option value="">All</option><option>completed</option><option>downloading</option><option>queued</option><option>retrying</option><option>failed</option><option>not_found</option><option>rejected</option><option>error</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table id="recsTable"></table></div>
+    </section>
+    <section id="tab-downloads" hidden><div class="table-wrap"><table id="dlTable"></table></div></section>
+    <section id="tab-library" hidden><div id="libTop"></div></section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail || r.statusText);
+  return body;
+};
+const lines = (id) => $(id).value.split("\n").map((s) => s.trim()).filter(Boolean);
+
+async function loadTaste() {
+  const t = await api("/api/taste");
+  for (const k of ["genres", "artists", "songs", "avoid"]) $(k).value = t[k].join("\n");
+  $("notes").value = t.notes;
+}
+$("saveTaste").onclick = async () => {
+  await api("/api/taste", { method: "PUT", body: JSON.stringify({
+    genres: lines("genres"), artists: lines("artists"), songs: lines("songs"), avoid: lines("avoid"), notes: $("notes").value,
+  }) });
+  $("saveMsg").textContent = "Saved";
+  setTimeout(() => ($("saveMsg").textContent = ""), 2000);
+};
+
+async function loadHealth() {
+  const h = await api("/api/health").catch((e) => ({ error: e.message }));
+  const pill = (name, v) => `<span class="pill ${v === "ok" ? "ok" : "bad"}" title="${esc(v)}">${name}${v === "ok" ? "" : " ⚠"}</span>`;
+  $("health").innerHTML = h.error ? pill("server", h.error)
+    : (h.config_file ? "" : pill("config.toml missing", "copy config.example.toml")) +
+      pill(`ollama · ${esc(h.model)}`, h.ollama) + pill("slskd", h.slskd);
+}
+
+async function loadLibrary() {
+  const l = await api("/api/library");
+  $("libSummary").innerHTML = `${l.albums} albums · ${l.artists} artists<br>${l.paths.map(esc).join("<br>") || "No paths in config.toml"}`;
+  $("scanMsg").textContent = l.scan.message;
+  $("scanBtn").disabled = l.scan.running;
+  $("libTop").innerHTML =
+    `<h2>Artists</h2><p>${l.top_artists.map((a) => `${esc(a.artist)} <span class="muted">${a.albums}</span>`).join(" · ") || "–"}</p>` +
+    `<h2>Genres</h2><p>${l.top_genres.map(([g, n]) => `${esc(g)} <span class="muted">${n}</span>`).join(" · ") || "–"}</p>`;
+  if (l.scan.running) setTimeout(loadLibrary, 1500);
+}
+$("scanBtn").onclick = async () => {
+  try { await api("/api/library/scan", { method: "POST" }); } catch (e) { $("scanMsg").textContent = e.message; }
+  loadLibrary();
+};
+
+let wasRunning = false;
+async function loadStatus() {
+  const s = await api("/api/status");
+  const log = $("log");
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
+  log.innerHTML = s.log.map((e) => `<div><span class="t">${new Date(e.t * 1000).toLocaleTimeString()}</span>${esc(e.msg)}</div>`).join("")
+    || `<span class="muted">${s.last_run ? "Last run: " + esc(s.last_run.summary) : "No runs yet. Save your taste, then hit Discover."}</span>`;
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  $("runBtn").disabled = s.running;
+  $("runBtn").textContent = s.running ? "Running…" : "Discover & queue";
+  if (s.running || wasRunning || !$("tab-recs").hidden) loadRecs();
+  wasRunning = s.running;
+}
+async function startRun() {
+  try {
+    await api("/api/run", { method: "POST", body: JSON.stringify({ guide: $("guide").value.trim() }) });
+    $("guide").value = "";
+  } catch (e) { $("log").insertAdjacentHTML("beforeend", `<div>${esc(e.message)}</div>`); }
+  loadStatus();
+}
+$("runBtn").onclick = startRun;
+$("guide").onkeydown = (e) => { if (e.key === "Enter" && !$("runBtn").disabled) startRun(); };
+
+async function loadRecs() {
+  const st = $("statusFilter").value;
+  const recs = await api("/api/recs" + (st ? `?status=${st}` : ""));
+  $("recsTable").innerHTML = "<tr><th>Album</th><th>Status</th><th>Source</th><th></th></tr>" + recs.map((r) => `
+    <tr><td><b>${esc(r.artist)}</b> – ${esc(r.album)} ${r.year ? `<span class="muted">(${r.year})</span>` : ""}
+      <div class="reason">${esc(r.reason)}</div></td>
+    <td><span class="status ${r.status}">${r.status}</span><div class="reason">${esc(r.detail)}</div></td>
+    <td class="muted">${r.username ? `${esc(r.username)}<br>${esc(r.format)} · ${r.file_count} files` : ""}
+      ${r.local_path ? `<br>📁 ${esc(r.local_path.split("/").pop())}` : ""}</td>
+    <td><button class="x" title="Forget (allow it to be suggested again)" data-del="${r.id}">✕</button></td></tr>`).join("");
+}
+$("statusFilter").onchange = loadRecs;
+$("recsTable").onclick = async (e) => {
+  const id = e.target.dataset.del;
+  if (id) { await api(`/api/recs/${id}`, { method: "DELETE" }); loadRecs(); }
+};
+
+async function loadDownloads() {
+  try {
+    const d = await api("/api/downloads");
+    $("dlTable").innerHTML = "<tr><th>Folder</th><th>From</th><th>Progress</th><th>Files</th></tr>" + (d.map((x) => `
+      <tr><td>${esc(x.folder.split("\\").slice(-2).join(" / "))}</td><td class="muted">${esc(x.username)}</td>
+      <td><span class="status ${x.status}">${x.status}</span>
+        <div class="bar" style="margin-top:4px"><i style="width:${x.percent}%"></i></div><span class="muted">${x.percent}%</span></td>
+      <td>${x.states.map((s) => `<span class="st ${s.kind}">${s.count} ${esc(s.label)}</span>`).join(" · ")}</td></tr>`).join("")
+      || `<tr><td class="muted">No downloads in slskd.</td></tr>`);
+  } catch (e) { $("dlTable").innerHTML = `<tr><td class="muted">${esc(e.message)}</td></tr>`; }
+}
+
+document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("active", x === b));
+  for (const t of ["recs", "downloads", "library"]) $("tab-" + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === "downloads") loadDownloads();
+}));
+
+loadTaste(); loadHealth(); loadLibrary(); loadRecs(); loadStatus();
+setInterval(loadStatus, 2000);
+setInterval(() => { if (!$("tab-downloads").hidden) loadDownloads(); }, 5000);
+setInterval(loadHealth, 30000);
+</script>
+</body>
+</html>
