@@ -115,7 +115,7 @@
 
 <dialog id="hello" onclick="if (event.target === this) this.close()">
   <div class="eye">👁</div>
-  <p>I see you, <b>Bilanhlolo</b>.</p>
+  <p id="helloMsg"></p>
   <form method="dialog"><button class="primary" autofocus>Hey</button></form>
 </dialog>
 
@@ -224,6 +224,15 @@ document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => {
   if (b.dataset.tab === "downloads") loadDownloads();
 }));
 
+const HELLOS = [
+  "I see you, <b>Bilanhlolo</b>.",
+  "Are you ready to have a rest?",
+  "Are you concentrating on your feet?",
+  "<b>Hard Jim's Metal Discourse</b> is ready",
+  "Successfully contacted <b>Quasar the Wonder Ninja</b>",
+  "<b>Radical Technology</b> has been applied",
+];
+$("helloMsg").innerHTML = HELLOS[Math.floor(Math.random() * HELLOS.length)];
 $("hello").showModal();
 
 loadTaste(); loadHealth(); loadLibrary(); loadRecs(); loadStatus();
