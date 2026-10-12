@@ -7,3 +7,4 @@ slskd/*
 .env
 downloads/
 share-placeholder/
+.claude/settings.local.json
