@@ -52,6 +52,13 @@
   .bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; min-width: 80px; }
   .bar i { display: block; height: 100%; background: var(--accent); }
   .x { background: none; border: none; color: var(--muted); padding: 0 4px; }
+  #hello { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 12px; padding: 28px 32px 22px; width: min(380px, calc(100vw - 32px)); text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  #hello::backdrop { background: rgba(0,0,0,.6); backdrop-filter: blur(3px); }
+  #hello[open] { animation: pop .25s ease-out; }
+  #hello .eye { font-size: 34px; line-height: 1; }
+  #hello p { font-size: 18px; margin: 14px 0 22px; }
+  #hello p b { color: var(--accent); }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.97); } }
 </style>
 </head>
 <body>
@@ -105,6 +112,12 @@
     <section id="tab-library" hidden><div id="libTop"></div></section>
   </div>
 </main>
+
+<dialog id="hello" onclick="if (event.target === this) this.close()">
+  <div class="eye">👁</div>
+  <p>I see you, <b>Bilanhlolo</b>.</p>
+  <form method="dialog"><button class="primary" autofocus>Hey</button></form>
+</dialog>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -210,6 +223,8 @@ document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => {
   for (const t of ["recs", "downloads", "library"]) $("tab-" + t).hidden = t !== b.dataset.tab;
   if (b.dataset.tab === "downloads") loadDownloads();
 }));
+
+$("hello").showModal();
 
 loadTaste(); loadHealth(); loadLibrary(); loadRecs(); loadStatus();
 setInterval(loadStatus, 2000);
